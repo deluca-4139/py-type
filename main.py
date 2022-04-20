@@ -1,5 +1,3 @@
-import random
-
 from curtsies import fmtstr, FullscreenWindow, Input, FSArray
 from curtsies.fmtfuncs import *
 
@@ -33,7 +31,6 @@ if __name__ == "__main__":
     with FullscreenWindow() as window:
         with Input() as input_generator:
             state = "title" # We use a state variable to track inputs/outputs depending on program state (title, typing, etc)
-            justSwitched = False
 
             a = FSArray(window.height, window.width)
 
@@ -53,6 +50,9 @@ if __name__ == "__main__":
             # and as there is only one keypress needed for a change
             # in state, it won't re-run until another key is pressed.
             for c in input_generator:
+                if c == '<ESC>':
+                    break
+
                 if state == "title":
                     if c == 'c':
                         state = "typing"
@@ -60,10 +60,9 @@ if __name__ == "__main__":
                         a = FSArray(window.height, window.width)
                         a[(window.height // 2), 0:len(test_string)] = [construct_fmtstr(input_string, test_string, window.width)]
                         window.render_to_terminal(a)
+
                 elif state == "typing":
-                    if c == '<ESC>':
-                        break
-                    elif c == '<BACKSPACE>':
+                    if c == '<BACKSPACE>':
                         input_string = input_string[:-1]
                     elif c == '<SPACE>':
                         input_string += " "
@@ -71,8 +70,22 @@ if __name__ == "__main__":
                         input_string += c
 
                     if input_string == test_string:
-                        state == "done"
+                        state = "done"
+
+                        a = FSArray(window.height, window.width)
+                        a[1, 0] = ["Well done! You finished the test.".center(window.width)]
+                        a[5, 0] = ["            [c] ~ Start another Typeracer test."]
+                        window.render_to_terminal(a)
                     else:
                         a = FSArray(window.height, window.width)
                         a[(window.height // 2), 0:len(test_string)] = [construct_fmtstr(input_string, test_string, window.width)]
+                        window.render_to_terminal(a)
+
+                elif state == "done":
+                    if c == 'c':
+                        state = "typing"
+
+                        input_string = ""
+                        a = FSArray(window.height, window.width)
+                        a[(window.height // 2), 0:len(test_string)] = [construct_fmtstr("", test_string, window.width)]
                         window.render_to_terminal(a)
